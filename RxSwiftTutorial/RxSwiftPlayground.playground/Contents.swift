@@ -227,4 +227,44 @@ example(of: "variable") {
     variable.value = mayThe4thBeWithYou
 }
 
-
+example(of: "PublishSubject") {
+    
+    let disposeBag = DisposeBag()
+    
+    let dealtHand = PublishSubject<[(String, Int)]>()
+    
+    func deal(_ cardCount: UInt) {
+        var deck = cards
+        var cardsRemaining: UInt32 = 52
+        var hand = [(String, Int)]()
+        
+        for _ in 0..<cardCount {
+            let randomIndex = Int(arc4random_uniform(cardsRemaining))
+            hand.append(deck[randomIndex])
+            deck.remove(at: randomIndex)
+            cardsRemaining -= 1
+        }
+        
+        // Add code to update dealtHand here
+        let total = points(for: hand)
+        
+        if total > 21 {
+            dealtHand.onError(HandError.busted)
+        } else {
+            dealtHand.onNext(hand)
+        }
+    }
+    
+    // Add subscription to dealtHand here
+    dealtHand.subscribe(onNext: { (element) in
+        print(cardString(for: element), "for", points(for: element))
+    }, onError: { (error) in
+        print(String(describing: error))
+    }, onCompleted: {
+        print("Complete")
+    }, onDisposed: {
+        print("Disposed")
+    })
+    
+    deal(3)
+}
