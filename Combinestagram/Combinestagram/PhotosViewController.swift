@@ -29,6 +29,8 @@
     private lazy var photos = PhotosViewController.loadPhotos()
     private lazy var imageManager = PHCachingImageManager()
     
+    private let disposeBag = DisposeBag()
+    
     // Observe changes to selected image instead of protocol/delegate pattern
     private let selectedPhotosSubject = PublishSubject<UIImage>()
     
@@ -49,10 +51,48 @@
         return PHAsset.fetchAssets(with: allPhotosOptions)
     }
     
+    func errorMessage() {
+        alert(title: "No access to Camera Roll",
+              text: "You can grant access to Combinestagram from the Settings app")
+            .asObservable()
+            .take(5.0, scheduler: MainScheduler.instance) // Schedule work on main thread after 5 sec
+            .subscribe(onCompleted: { [weak self] in
+                self?.dismiss(animated: true, completion: nil)
+                _ = self?.navigationController?.popViewController(animated: true)
+            })
+            .disposed(by: disposeBag)
+    }
+    
     // MARK: View Controller
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let authorized = PHPhotoLibrary.authorized.share()
+        
+        // Handle authorized
+        authorized
+            .skipWhile { $0 == false }
+            .take(1)
+            .do(onNext: { [weak self] _ in
+                // Keep loadPhotos work in background
+                self?.photos = PhotosViewController.loadPhotos()
+            })
+            .observeOn(MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.collectionView?.reloadData()
+            })
+            .disposed(by: disposeBag)
+        
+        // Handle unauthorized
+        authorized
+            .takeLast(1)
+            .filter { $0 == false }
+            .observeOn(MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                guard let `self` = self else { return }
+                self.errorMessage()
+            })
+            .disposed(by: disposeBag)
     }
     
     override func viewWillDisappear(_ animated: Bool) {

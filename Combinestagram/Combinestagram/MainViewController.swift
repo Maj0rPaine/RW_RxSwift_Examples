@@ -30,18 +30,29 @@ class MainViewController: UIViewController {
     @IBOutlet weak var buttonSave: UIButton!
     @IBOutlet weak var itemAdd: UIBarButtonItem!
     
-    let bag = DisposeBag()
-    let images = Variable<[UIImage]>([])
-    let collageLimit = 6
+    private let bag = DisposeBag()
+    private let images = Variable<[UIImage]>([])
+    private let collageLimit = 6
+    
+    private var imageCache = [Int]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        images.asObservable()
+        let imagesObservable = images
+            .asObservable()
+            .throttle(0.5, scheduler: MainScheduler.instance)
+            .share(replay: 1)
+            
+        imagesObservable
             .subscribe(onNext: { [weak self] (photos) in
                 guard let preview = self?.imagePreview else { return }
                 preview.image = UIImage.collage(images: photos, size: preview.frame.size)
-                
+            })
+            .disposed(by: bag)
+        
+        imagesObservable
+            .subscribe(onNext: { [weak self] (photos) in
                 self?.updateUI(photos: photos)
             })
             .disposed(by: bag)
@@ -57,6 +68,7 @@ class MainViewController: UIViewController {
     
     @IBAction func actionClear() {
         images.value = []
+        imageCache = []
     }
     
     @IBAction func actionSave() {
@@ -77,21 +89,51 @@ class MainViewController: UIViewController {
     @IBAction func actionAdd() {
         let photosViewController = storyboard!.instantiateViewController(withIdentifier: "PhotosViewController") as! PhotosViewController
         
-        // Observe selected images
-        photosViewController.selectedPhotos
-            .subscribe(onNext: { [weak self](newImage) in
+        // Observe selected images by sharing the subscription
+        let newPhotos = photosViewController.selectedPhotos.share()
+        
+        newPhotos
+            .takeWhile { [weak self] image in
+                (self?.images.value.count ?? 0) < 6
+            }
+            .filter { newImage in
+                // Only allow landscape
+                newImage.size.width > newImage.size.height
+            }
+            .filter { [weak self] newImage in
+                // Only allow unique images
+                let len = UIImagePNGRepresentation(newImage)?.count ?? 0
+                
+                guard self?.imageCache.contains(len) == false else {
+                    return false
+                }
+                
+                self?.imageCache.append(len)
+                
+                return true
+            }
+            .subscribe(onNext: { [weak self] (newImage) in
                 guard let images = self?.images else { return }
                 images.value.append(newImage)
-                }, onError: { (error) in
-                    
-            }, onCompleted: {
+            })
+            .disposed(by: bag)
                 
-            }, onDisposed: {
-                print("completed photo selection")
+        newPhotos
+            .ignoreElements()
+            .subscribe(onCompleted: { [weak self] in
+                self?.updateNavigationIcon()
             })
             .disposed(by: bag)
         
         navigationController?.pushViewController(photosViewController, animated: true)
+    }
+    
+    func updateNavigationIcon() {
+        let icon = imagePreview.image?
+            .scaled(CGSize(width: 22, height: 22))
+            .withRenderingMode(.alwaysOriginal)
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: icon, style: .done, target: nil, action: nil)
     }
     
     func showMessage(_ title: String, description: String? = nil) {
