@@ -39,6 +39,7 @@
 /* Begin PBXFileReference section */
 		1FD3C91EBF13CFFDBA40995D /* Pods_RxSwiftTutorialUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RxSwiftTutorialUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3F2E11F12110D70300C9C1AC /* TransformingOperators.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = TransformingOperators.playground; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3F50F902211201EC00CF1924 /* CombiningOperators.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = CombiningOperators.playground; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		3F5F06AA210B946E00E82756 /* RxSwiftTutorial.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RxSwiftTutorial.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3F5F06AD210B946E00E82756 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3F5F06AF210B946E00E82756 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -130,6 +131,7 @@
 		3F5F06AC210B946E00E82756 /* RxSwiftTutorial */ = {
 			isa = PBXGroup;
 			children = (
+				3F50F902211201EC00CF1924 /* CombiningOperators.playground */,
 				3F2E11F12110D70300C9C1AC /* TransformingOperators.playground */,
 				3F78F4E621108D8400BFF1E0 /* FilteringOperators.playground */,
 				3F78F4E421108CCA00BFF1E0 /* GettingStarted.playground */,
